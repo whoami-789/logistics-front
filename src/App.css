@@ -10,7 +10,7 @@
     display: none; /* Скрыть боковое меню на мобильных */
   }
   .mobile-menu-button {
-    display: block; /* Показать кнопку меню на мобильных */
+    display: flex; /* Показать кнопку меню на мобильных */
   }
 
   .ant-card-head-title {

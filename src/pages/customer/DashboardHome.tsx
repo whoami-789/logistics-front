@@ -3,9 +3,7 @@ import { Card, Col, Row } from 'antd';
 import { StarFilled } from '@ant-design/icons';
 
 const DashboardHome: React.FC = () => {
-  const userName: string = "Иван";  // Имя пользователя
   const createdCargoCount: number = 3;
-  const inProgressCargoCount: number = 1;
   const completedCargoCount: number = 5;
   const userScore: number = 95;
 
@@ -13,7 +11,14 @@ const DashboardHome: React.FC = () => {
   const inProgressCargos = [
     { id: 1, name: 'Груз 1', details: 'Детали груза 1' },
     { id: 2, name: 'Груз 2', details: 'Детали груза 2' },
-    { id: 3, name: 'Груз 3', details: 'Детали груза 3' }
+    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
+    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
+    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
+    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
+    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
+    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
+    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
+    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
   ];
 
   // Функция для отображения заполненных звезд
@@ -86,18 +91,20 @@ const DashboardHome: React.FC = () => {
         </Col>
       </Row>
 
-      {/* Прямоугольники для грузов в процессе доставки */}
+      {/* Прямоугольники для грузов в процессе доставки с прокруткой */}
       <div style={{ marginTop: '20px' }}>
         <h3>Грузы в процессе доставки:</h3>
-        <Row gutter={16}>
-          {inProgressCargos.map(cargo => (
-            <Col xs={24} key={cargo.id} style={{ marginBottom: '16px' }}>
-              <Card title={cargo.name} bordered={true} style={{ width: '100%' }}>
-                <p>{cargo.details}</p>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+        <div style={{ maxHeight: '1000px', overflowY: 'auto', paddingRight: '10px' }}>
+          <Row gutter={16}>
+            {inProgressCargos.map(cargo => (
+              <Col xs={24} key={cargo.id} style={{ marginBottom: '16px' }}>
+                <Card title={cargo.name} bordered={true} style={{ width: '100%' }}>
+                  <p>{cargo.details}</p>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </div>
       </div>
     </div>
   );

@@ -55,7 +55,7 @@ function CustomerDashboard() {
               type="text"
               icon={<MenuOutlined />}
               onClick={showDrawer}
-              style={{ fontSize: '24px', marginRight: '16px', display: 'flex', marginTop : '15px' }} // Показываем кнопку на мобильных
+              style={{ fontSize: '24px', marginRight: '16px', marginTop : '15px' }} // Показываем кнопку на мобильных
               className="mobile-menu-button"
             />
         </Header>
