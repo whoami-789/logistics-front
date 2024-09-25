@@ -4,3 +4,30 @@
     color: #ffffff; /* Цвет текста при ховере */
   }
   
+/* App.css или ваш CSS файл */
+@media (max-width: 768px) {
+  .ant-layout-sider {
+    display: none; /* Скрыть боковое меню на мобильных */
+  }
+  .mobile-menu-button {
+    display: block; /* Показать кнопку меню на мобильных */
+  }
+
+  .ant-card-head-title {
+    border-bottom: none; /* Убираем нижнюю границу заголовка */
+  }
+
+  .ant-card-head {
+    border-bottom: none !important; /* Убираем нижнюю границу заголовка */
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-button {
+    display: none; /* Скрыть кнопку меню на больших экранах */
+  }
+  .name{
+    display: none;
+  }
+}
+
