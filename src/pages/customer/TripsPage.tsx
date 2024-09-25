@@ -25,7 +25,7 @@ const TripsPage: React.FC = () => {
         <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
           <option value="cash">Наличные</option>
           <option value="transfer">Перечисление</option>
-        </select>
+        </select> 
 
         <label>Аванс (%)</label>
         <input type="number" value={advancePayment} onChange={(e) => setAdvancePayment(Number(e.target.value))} />

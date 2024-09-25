@@ -45,7 +45,7 @@ function CustomerDashboard() {
           <Menu.Item key="/customer/contacts" icon={<PhoneOutlined />}>
             Контакты
           </Menu.Item>
-        </Menu>
+        </Menu> 
       </Sider>
 
       <Layout>
