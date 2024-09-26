@@ -32,6 +32,7 @@ const TripsPage: React.FC = () => {
     setRoutes([...routes, { countryTo: '', cityTo: '', addressTo: '' }]);
   };
 
+
   const handleSubmit = () => {
     console.log({
       startDate, endDate, weight, price, distance, cargoType,
@@ -208,59 +209,66 @@ const TripsPage: React.FC = () => {
         <h3>Маршруты</h3>
         {routes.map((route, index) => (
           <Row key={index} gutter={16}>
-            <Col span={8}>
-              <Form.Item label="Страна отправления" required>
-                <Select
-                  showSearch
-                  placeholder="Выберите страну"
-                  optionFilterProp="children"
-                  onChange={(value) => handleCountryChange(value, index, 'countryFrom')}
-                  filterOption={(input, option) => {
-                    if (option && option.children) {
-                      return option.children.toString().toLowerCase().includes(input.toLowerCase());
-                    }
-                    return false;
-                  }}
-                >
-                  {countries.map((country) => (
-                    <Option key={country.code} value={country.code}>
-                      {country.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item label="Город отправления" required>
-                <Select
-                  showSearch
-                  placeholder="Выберите город"
-                  optionFilterProp="children"
-                  onChange={(value) => handleCityChange(value, index, 'cityFrom')}
-                  filterOption={(input, option) => {
-                    if (option && option.children) {
-                      return option.children.toString().toLowerCase().includes(input.toLowerCase());
-                    }
-                    return false;
-                  }}
-                >
-                  {cities.map((city) => (
-                    <Option key={city} value={city}>
-                      {city}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item label="Адрес отправления" required>
-                <Input value={route.addressFrom} onChange={(e) => {
-                  const newRoutes = [...routes];
-                  newRoutes[index].addressFrom = e.target.value;
-                  setRoutes(newRoutes);
-                }} />
-              </Form.Item>
-            </Col>
+            {/* Отображаем только для первого маршрута */}
+            {index === 0 && (
+              <>
+                <Col span={8}>
+                  <Form.Item label="Страна отправления" required>
+                    <Select
+                      showSearch
+                      placeholder="Выберите страну"
+                      optionFilterProp="children"
+                      onChange={(value) => handleCountryChange(value, index, 'countryFrom')}
+                      filterOption={(input, option) => {
+                        if (option && option.children) {
+                          return option.children.toString().toLowerCase().includes(input.toLowerCase());
+                        }
+                        return false;
+                      }}
+                    >
+                      {countries.map((country) => (
+                        <Option key={country.code} value={country.code}>
+                          {country.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item label="Город отправления" required>
+                    <Select
+                      showSearch
+                      placeholder="Выберите город"
+                      optionFilterProp="children"
+                      onChange={(value) => handleCityChange(value, index, 'cityFrom')}
+                      filterOption={(input, option) => {
+                        if (option && option.children) {
+                          return option.children.toString().toLowerCase().includes(input.toLowerCase());
+                        }
+                        return false;
+                      }}
+                    >
+                      {cities.map((city) => (
+                        <Option key={city} value={city}>
+                          {city}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item label="Адрес отправления" required>
+                    <Input value={route.addressFrom} onChange={(e) => {
+                      const newRoutes = [...routes];
+                      newRoutes[index].addressFrom = e.target.value;
+                      setRoutes(newRoutes);
+                    }} />
+                  </Form.Item>
+                </Col>
+              </>
+            )}
+
+            {/* Всегда отображаем поля назначения */}
             <Col span={8}>
               <Form.Item label="Страна назначения" required>
                 <Select
@@ -316,6 +324,7 @@ const TripsPage: React.FC = () => {
             </Col>
           </Row>
         ))}
+
 
         <Button type="dashed" onClick={addRoute} style={{ width: '100%', marginBottom: '20px' }}>
           <PlusOutlined /> Добавить пункт назначения
