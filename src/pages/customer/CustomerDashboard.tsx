@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Button, Drawer, Flex } from 'antd';
+import { Layout, Menu, Button, Drawer, Flex, Avatar, Card } from 'antd';
 import { useNavigate, Route, Routes } from 'react-router-dom';
 import { UserOutlined, FileTextOutlined, HistoryOutlined, PhoneOutlined, MenuOutlined } from '@ant-design/icons';
 import DashboardHome from './DashboardHome';
@@ -7,6 +7,7 @@ import TripsPage from './TripsPage';
 import ContactsPage from './ContactsPage';
 import HistoryPage from './HistoryPage';
 import '../../App.css';
+import Title from 'antd/es/typography/Title';
 
 const { Header, Sider, Content } = Layout;
 
@@ -27,7 +28,13 @@ function CustomerDashboard() {
     <Layout style={{ minHeight: '100vh' }}>
       {/* Сайдбар для десктопа */}
       <Sider theme="light" width={200}>
-        <p style={{ fontSize: '16px', padding: '16px' }}>Добро пожаловать, {userName}!</p>
+        <Card style={{ textAlign: 'center', margin: '8px', padding: '12px', maxWidth: '180px', width: '100%' }}>
+          <Avatar size={48} icon={<UserOutlined />} />
+          <Title level={5} style={{ marginTop: '12px' }}>Добро пожаловать, {userName}!</Title>
+          <Button type="primary" size="small" style={{ marginTop: '6px' }} onClick={() => navigate('/customer/profile')}>
+            Профиль
+          </Button>
+        </Card>
         <Menu
           mode="inline"
           defaultSelectedKeys={['/customer']}
@@ -45,19 +52,19 @@ function CustomerDashboard() {
           <Menu.Item key="/customer/contacts" icon={<PhoneOutlined />}>
             Контакты
           </Menu.Item>
-        </Menu> 
+        </Menu>
       </Sider>
 
       <Layout>
         <Header style={{ backgroundColor: '#fff', padding: '0 16px', alignItems: 'center' }}>
-            {/* Кнопка для открытия Drawer на мобильных устройствах */}
-            <Button
-              type="text"
-              icon={<MenuOutlined />}
-              onClick={showDrawer}
-              style={{ fontSize: '24px', marginRight: '16px', marginTop : '15px' }} // Показываем кнопку на мобильных
-              className="mobile-menu-button"
-            />
+          {/* Кнопка для открытия Drawer на мобильных устройствах */}
+          <Button
+            type="text"
+            icon={<MenuOutlined />}
+            onClick={showDrawer}
+            style={{ fontSize: '24px', marginRight: '16px', marginTop: '15px' }} // Показываем кнопку на мобильных
+            className="mobile-menu-button"
+          />
         </Header>
 
         {/* Drawer для мобильных устройств */}

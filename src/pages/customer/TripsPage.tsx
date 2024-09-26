@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Input, Select, Button, InputNumber, DatePicker, Checkbox, Row, Col, Divider } from 'antd';
+import { Form, Input, Select, Button, InputNumber, DatePicker, Checkbox, Row, Col, Divider, Modal } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import axios from 'axios';
+import YandexMap from '../../component/YandexMap';
 
 const { Option } = Select;
 
@@ -25,7 +26,31 @@ const TripsPage: React.FC = () => {
   const [carBody, setCarBody] = useState<string>('');
   const [countries, setCountries] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState<number | null>(null);
+  const [selectedAddressType, setSelectedAddressType] = useState<'from' | 'to' | null>(null); // Тип адреса: 'from' или 'to'
+  const [selectedAddress, setSelectedAddress] = useState<string>('');
+  const [initialCoords, setInitialCoords] = useState<[number, number] | null>(null);
+
+  const handleAddressClick = (index: number, type: 'from' | 'to') => {
+    setSelectedRouteIndex(index);
+    setSelectedAddressType(type);
+
+    // Установите координаты для выбранного города перед открытием модального окна
+    const route = routes[index];
+    if (type === 'from') {
+      getCoordinatesForCity(route.cityFrom).then(coords => {
+        setInitialCoords(coords);
+        setModalVisible(true);
+      });
+    } else {
+      getCoordinatesForCity(route.cityTo).then(coords => {
+        setInitialCoords(coords);
+        setModalVisible(true);
+      });
+    }
+  };
+
 
 
   const addRoute = () => {
@@ -75,10 +100,57 @@ const TripsPage: React.FC = () => {
     fetchCities(countryCode);
   };
 
-  const handleCityChange = (city: string, index: number, type: string) => {
+  const handleCityChange = async (city: string, index: number, type: string) => {
     const newRoutes = [...routes];
     newRoutes[index][type] = city;
     setRoutes(newRoutes);
+
+    // Установить координаты для выбранного города
+    try {
+      const cityCoordinates = await getCoordinatesForCity(city); // Асинхронное получение координат
+      setInitialCoords(cityCoordinates);
+    } catch (error) {
+      console.error('Ошибка получения координат:', error);
+      // Обработайте ошибку, если это необходимо
+      setInitialCoords([55.751244, 37.618423]); // Возврат координат по умолчанию в случае ошибки
+    }
+  };
+
+
+  const getCoordinatesForCity = async (city: string): Promise<[number, number]> => {
+    const apiKey = 'a0182201-d5b3-4c80-8a64-9ac085a73d3d'; // Ваш ключ API
+    const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${apiKey}&geocode=${encodeURIComponent(city)}&format=json`);
+    const data = await response.json();
+
+    if (data && data.response && data.response.GeoObjectCollection && data.response.GeoObjectCollection.featureMember.length > 0) {
+      const coordinates = data.response.GeoObjectCollection.featureMember[0].GeoObject.Point.pos.split(' ');
+      return [parseFloat(coordinates[1]), parseFloat(coordinates[0])]; // Возвращаем [широта, долгота]
+    }
+    return [55.751244, 37.618423]; // Возврат координат по умолчанию, если город не найден
+  };
+
+  const getAddressFromCoords = async (coords: [number, number]) => {
+    const apiKey = 'a0182201-d5b3-4c80-8a64-9ac085a73d3d'; // Ваш ключ API
+    const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${apiKey}&geocode=${coords[1]},${coords[0]}&format=json`);
+    const data = await response.json();
+
+    if (data && data.response && data.response.GeoObjectCollection && data.response.GeoObjectCollection.featureMember.length > 0) {
+      return data.response.GeoObjectCollection.featureMember[0].GeoObject.name; // Возвращаем адрес
+    }
+    return 'Адрес не найден'; // Возврат по умолчанию
+  };
+
+  const handleAddressSelect = (address: string) => {
+    if (selectedRouteIndex !== null) {
+      const newRoutes = [...routes];
+      if (selectedAddressType === 'from') {
+        newRoutes[selectedRouteIndex].addressFrom = address; // Устанавливаем адрес отправления
+      } else {
+        newRoutes[selectedRouteIndex].addressTo = address; // Устанавливаем адрес назначения
+      }
+      setRoutes(newRoutes);
+    }
+    setModalVisible(false); // Закрываем модальное окно
   };
 
 
@@ -258,11 +330,11 @@ const TripsPage: React.FC = () => {
                 </Col>
                 <Col span={8}>
                   <Form.Item label="Адрес отправления" required>
-                    <Input value={route.addressFrom} onChange={(e) => {
-                      const newRoutes = [...routes];
-                      newRoutes[index].addressFrom = e.target.value;
-                      setRoutes(newRoutes);
-                    }} />
+                    <Input
+                      value={route.addressFrom}
+                      onClick={() => handleAddressClick(index, 'from')} // Открываем карту для адреса отправления
+                      readOnly // Делаем инпут только для чтения
+                    />
                   </Form.Item>
                 </Col>
               </>
@@ -315,11 +387,11 @@ const TripsPage: React.FC = () => {
             </Col>
             <Col span={8}>
               <Form.Item label="Адрес назначения" required>
-                <Input value={route.addressTo} onChange={(e) => {
-                  const newRoutes = [...routes];
-                  newRoutes[index].addressTo = e.target.value;
-                  setRoutes(newRoutes);
-                }} />
+                <Input
+                  value={route.addressTo}
+                  onClick={() => handleAddressClick(index, 'to')} // Открываем карту для адреса назначения
+                  readOnly // Делаем инпут только для чтения
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -333,6 +405,17 @@ const TripsPage: React.FC = () => {
         <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
           Сохранить заказ
         </Button>
+
+        {/* Modal for Yandex Map */}
+        <Modal
+          title="Выберите место на карте"
+          visible={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          footer={null}
+          width={800}
+        >
+          <YandexMap initialCoords={initialCoords} onAddressSelect={handleAddressSelect} />
+        </Modal>
       </Form>
     </div>
   );
