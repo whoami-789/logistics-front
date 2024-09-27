@@ -51,8 +51,6 @@ const TripsPage: React.FC = () => {
     }
   };
 
-
-
   const addRoute = () => {
     setRoutes([...routes, { countryTo: '', cityTo: '', addressTo: '' }]);
   };
@@ -105,16 +103,22 @@ const TripsPage: React.FC = () => {
     newRoutes[index][type] = city;
     setRoutes(newRoutes);
 
-    // Установить координаты для выбранного города
+    // Получаем координаты выбранного города
     try {
-      const cityCoordinates = await getCoordinatesForCity(city); // Асинхронное получение координат
-      setInitialCoords(cityCoordinates);
+      const cityCoordinates = await getCoordinatesForCity(city);
+      setInitialCoords(cityCoordinates); // обновляем координаты для карты
+
+      // Если модалка открыта, обновляем координаты в ней
+      if (modalVisible) {
+        setModalVisible(false); // закрываем карту перед обновлением
+        setTimeout(() => setModalVisible(true), 0); // открываем заново с новыми координатами
+      }
     } catch (error) {
       console.error('Ошибка получения координат:', error);
-      // Обработайте ошибку, если это необходимо
-      setInitialCoords([55.751244, 37.618423]); // Возврат координат по умолчанию в случае ошибки
+      setInitialCoords([55.751244, 37.618423]); // дефолтные координаты
     }
   };
+
 
 
   const getCoordinatesForCity = async (city: string): Promise<[number, number]> => {
@@ -144,14 +148,20 @@ const TripsPage: React.FC = () => {
     if (selectedRouteIndex !== null) {
       const newRoutes = [...routes];
       if (selectedAddressType === 'from') {
-        newRoutes[selectedRouteIndex].addressFrom = address; // Устанавливаем адрес отправления
+        newRoutes[selectedRouteIndex].addressFrom = address;
       } else {
-        newRoutes[selectedRouteIndex].addressTo = address; // Устанавливаем адрес назначения
+        newRoutes[selectedRouteIndex].addressTo = address;
       }
       setRoutes(newRoutes);
     }
-    setModalVisible(false); // Закрываем модальное окно
+
+    // Сбрасываем координаты после выбора адреса
+    setInitialCoords(null);
+    setModalVisible(false); // Закрываем модалку после выбора адреса
   };
+
+
+
 
 
   return (
