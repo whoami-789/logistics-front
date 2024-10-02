@@ -5,7 +5,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import './App.css'; // Подключи файл стилей
 import CustomerDashboard from './pages/customer/CustomerDashboard';
-import DriverDashboard from './pages/driver/CustomerDashboard';
+import DriverDashboard from './pages/driver/DriverDashboard';
 
 const { Header } = Layout;
 
