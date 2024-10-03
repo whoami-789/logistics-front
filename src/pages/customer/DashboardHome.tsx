@@ -1,25 +1,13 @@
-import React from 'react';
-import { Card, Col, Row } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Card, Col, Row, message } from 'antd';
 import { StarFilled } from '@ant-design/icons';
+import axios from 'axios';
 
 const DashboardHome: React.FC = () => {
-  const createdCargoCount: number = 3;
-  const completedCargoCount: number = 5;
-  const userScore: number = 95;
-
-  // Пример данных для грузов в процессе доставки
-  const inProgressCargos = [
-    { id: 1, name: 'Груз 1', details: 'Детали груза 1' },
-    { id: 2, name: 'Груз 2', details: 'Детали груза 2' },
-    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
-    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
-    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
-    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
-    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
-    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
-    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
-    { id: 3, name: 'Груз 3', details: 'Детали груза 3' },
-  ];
+  const [createdCargoCount, setCreatedCargoCount] = useState<number>(0);
+  const [completedCargoCount, setCompletedCargoCount] = useState<number>(0);
+  const [userScore, setUserScore] = useState<number>(0);
+  const [inProgressCargos, setInProgressCargos] = useState<{ id: number; name: string; details: string }[]>([]);
 
   // Функция для отображения заполненных звезд
   const renderStars = (score: number) => {
@@ -33,6 +21,57 @@ const DashboardHome: React.FC = () => {
       </div>
     );
   };
+
+  useEffect(() => {
+    console.log(localStorage)
+    const userId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
+  
+    if (!userId) {
+      message.error('Пользователь не найден');
+      return;
+    }
+  
+    if (!token) {
+      message.error('Токен авторизации отсутствует');
+      return;
+    }
+  
+    // Запрос на получение данных пользователя
+    axios.get(`http://localhost:5050/api/users/${userId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      const user = response.data;
+      setUserScore(user.score || 0); // Предполагается, что поле score есть в модели пользователя
+      setCreatedCargoCount(user.createdCargos || 0); // Пример
+      setCompletedCargoCount(user.completedCargos || 0); // Пример
+    })
+    .catch(error => {
+      message.error('Ошибка при получении данных пользователя');
+    });
+  
+    // Запрос на получение всех заказов для заказчика
+    axios.get(`http://localhost:5050/api/orders/customer/${userId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      const orders = response.data;
+      const cargos = orders.map((order: any) => ({
+        id: order.id,
+        name: `Груз ${order.id}`,
+        details: order.details || `Детали для заказа ${order.id}`,
+      }));
+      setInProgressCargos(cargos);
+    })
+    .catch(error => {
+      message.error('Ошибка при получении заказов');
+    });
+  }, []);
 
   return (
     <div style={{ padding: '20px' }}>
@@ -108,6 +147,6 @@ const DashboardHome: React.FC = () => {
       </div>
     </div>
   );
-}
+};
 
 export default DashboardHome;

@@ -14,6 +14,7 @@ const LoginPage: React.FC = () => {
       });
 
       // Сохраняем ID пользователя и роль в localStorage
+      localStorage.setItem('token', response.data.token)
       localStorage.setItem('userId', response.data.userId); // Сохраняем ID пользователя
       localStorage.setItem('role', response.data.role); // Сохраняем роль
 
