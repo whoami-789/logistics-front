@@ -1,21 +1,43 @@
 import React from 'react';
-import { Form, Input, Button } from 'antd';
-import { Link } from 'react-router-dom';
-import '../App.css'; // Подключи файл стилей
+import { Form, Input, Button, message } from 'antd';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const LoginPage: React.FC = () => {
-  const onFinish = (values: { username: string; password: string }) => {
-    console.log('Received values:', values);
-    // Здесь можно добавить логику для аутентификации
+  const navigate = useNavigate();
+
+  const onFinish = async (values: { username: string; password: string }) => {
+    try {
+      const response = await axios.post('http://localhost:5050/api/users/login', {
+        phoneNumber: values.username, // Мы отправляем номер телефона как phoneNumber
+        password: values.password,
+      });
+
+      // Сохраняем ID пользователя и роль в localStorage
+      localStorage.setItem('userId', response.data.userId); // Сохраняем ID пользователя
+      localStorage.setItem('role', response.data.role); // Сохраняем роль
+
+      message.success('Успешный вход');
+
+      // Переход на страницу в зависимости от роли
+      if (response.data.role === 'Заказчик') {
+        navigate('/customer');
+      } else if (response.data.role === 'Водитель') {
+        navigate('/driver');
+      }
+
+    } catch (error) {
+      message.error('Ошибка при входе. Проверьте данные.');
+    }
   };
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh', 
-      backgroundColor: '#f0f2f5' // светлый фон
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      backgroundColor: '#f0f2f5'
     }}>
       <div style={{ maxWidth: '400px', width: '100%' }}>
         <h2 style={{ textAlign: 'center' }}>Вход</h2>
