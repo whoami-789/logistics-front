@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layout, Menu, Button, Drawer, Flex, Avatar, Card } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Layout, Menu, Button, Drawer, Flex, Avatar, Card, message } from 'antd';
 import { useNavigate, Route, Routes } from 'react-router-dom';
 import { UserOutlined, FileTextOutlined, HistoryOutlined, PhoneOutlined, MenuOutlined } from '@ant-design/icons';
 import DashboardHome from './DashboardHome';
@@ -8,13 +8,49 @@ import ContactsPage from './ContactsPage';
 import HistoryPage from './HistoryPage';
 import '../../App.css';
 import Title from 'antd/es/typography/Title';
+import axios from 'axios';
+import { BACKEND_URL } from '../../config/config';
+
 
 const { Header, Sider, Content } = Layout;
 
+interface User {
+  id: number;
+  firstName: string;
+  email: string;
+  phoneNumber: string;
+  // Добавьте другие поля, которые приходят из запроса
+}
+
 function DriverDashboard() {
   const navigate = useNavigate();
-  const userName: string = "Иван"; // Имя пользователя
   const [visible, setVisible] = useState(false); // Состояние для видимости Drawer
+  const [user, setUser] = useState<User | null>(null); // Состояние для пользователя
+  const back = BACKEND_URL;
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
+  
+    if (!userId || !token) {
+      message.error('Пользователь или токен не найдены');
+      return;
+    }
+  
+    // Запрос на получение данных пользователя
+    axios.get(`${back}/api/users/${userId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    .then(response => {
+      const userData: User = response.data; // Приводим к типу User
+      setUser(userData); // Сохраняем данные пользователя
+    })
+    .catch(error => {
+      message.error('Ошибка при получении данных пользователя');
+    });
+  }, []);
 
   const showDrawer = () => {
     setVisible(true);
@@ -28,13 +64,6 @@ function DriverDashboard() {
     <Layout style={{ minHeight: '100vh' }}>
       {/* Сайдбар для десктопа */}
       <Sider theme="light" width={200}>
-        <Card style={{ textAlign: 'center', margin: '8px', padding: '12px', maxWidth: '180px', width: '100%' }}>
-          <Avatar size={48} icon={<UserOutlined />} />
-          <Title level={5} style={{ marginTop: '12px' }}>Добро пожаловать, {userName}!</Title>
-          <Button type="primary" size="small" style={{ marginTop: '6px' }} onClick={() => navigate('/customer/profile')}>
-            Профиль
-          </Button>
-        </Card>
         <Menu
           mode="inline"
           defaultSelectedKeys={['/customer']}
@@ -69,7 +98,7 @@ function DriverDashboard() {
 
         {/* Drawer для мобильных устройств */}
         <Drawer
-          title={`Добро пожаловать, ${userName}!`} // Используем шаблонные строки
+          title={`Добро пожаловать, ${user ? user.firstName : 'Гость'}!`} // Используем шаблонные строки
           placement="left"
           onClose={onClose}
           visible={visible}

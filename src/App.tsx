@@ -1,40 +1,60 @@
-import React from 'react';
-import { Layout, Menu } from 'antd';
-import { BrowserRouter as Router, Link, Route, Routes } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Layout, Image } from 'antd';
+import { BrowserRouter as Router, Route, Routes, useNavigate, Link } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import './App.css'; // Подключи файл стилей
 import CustomerDashboard from './pages/customer/CustomerDashboard';
 import DriverDashboard from './pages/driver/DriverDashboard';
+import './App.css';
+import MenuComponent from './component/MenuComponent';
+import MainPage from './pages/MainPage';
+import DashboardSelection from './pages/DashboardSelection';
 
 const { Header } = Layout;
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false); // Указываем тип состояния
+  const navigate = useNavigate();
+
+  // Проверяем авторизацию при каждом изменении localStorage
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsLoggedIn(false);
+    navigate('/login');
+  };
+
+  const handleLogin = () => {
+    // Логика проверки логина
+    // Если логин успешен, выполняем переход:
+    navigate('/login'); // Здесь переходим на страницу логина
+  };
+
+
   return (
-    <Router>
-      <Layout className="main">
-        <Header className="header-container" style={{ backgroundColor: "#1677ff" }}>
-          <div className="container">
-            <div className="logo" style={{ float: 'left', color: 'white', fontSize: '24px' }}>
-              <Link to="/" style={{ color: 'white' }}>Easy Cargobooking</Link>
-            </div>
-            <Menu theme="light" mode="horizontal" style={{ float: 'right', backgroundColor: "#1677ff" }} selectedKeys={[]}>
-              <Menu.Item key="1" style={{ fontSize: 23 }} className='menu-item'>
-                <Link to="/login" style={{ color: 'white' }}>Войти</Link>
-              </Menu.Item>
-            </Menu>
+    <Layout className="main">
+      <Header className="header-container" style={{ backgroundColor: "#1677ff" }}>
+        <div className="container">
+          <div className="logo" style={{ float: 'left', color: 'white', fontSize: '24px' }}>
+            <Link to="/" style={{ color: 'white' }}>Cargo Booking</Link>
           </div>
-        </Header>
-        <div className="content">
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/customer/*" element={<CustomerDashboard />} /> {/* Здесь изменено на "/*" */}
-            <Route path="/driver/*" element={<DriverDashboard />} /> {/* Здесь изменено на "/*" */}
-          </Routes>
+          <MenuComponent isLoggedIn={isLoggedIn} handleLogout={handleLogout} />
         </div>
-      </Layout>
-    </Router>
+      </Header>
+      <Routes>
+        <Route path="/" element={<MainPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/select-dashboard" element={<DashboardSelection />} />
+        <Route path="/customer/*" element={<CustomerDashboard />} />
+        <Route path="/driver/*" element={<DriverDashboard />} />
+      </Routes>
+    </Layout>
+
   );
 }
 

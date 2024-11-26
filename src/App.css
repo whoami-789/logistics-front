@@ -1,3 +1,4 @@
+
 /* Ховер-эффект для меню */
 .ant-menu-overflow:hover {
     background-color: rgba(255, 255, 255, 0.918); /* Цвет фона при ховере */
@@ -21,6 +22,81 @@
     border-bottom: none !important; /* Убираем нижнюю границу заголовка */
   }
 }
+
+.overlay-text {
+  position: absolute;
+  top: 100%;
+  left: 70px; /* Отступ слева */
+  transform: translateY(-50%);
+  color: white;
+  max-width: 600px; /* Максимальная ширина текста */
+}
+
+.overlay-text h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.overlay-text p {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.image {
+  background-image: url('/public/123321.png'); /* Без '/public' */
+  background-size: cover; /* Добавьте, если нужно покрыть весь блок */
+  width: 100%;
+  height: 900px; /* Задайте размеры */
+  filter: blur(2px); /* Регулирует силу размытия */
+}
+
+.circle-images-container {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px 0;
+  text-align: center;
+  margin-top: 10px; /* Отступ сверху от image-container */
+}
+
+.circle-image-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80px;
+}
+
+.circle-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.circle-caption {
+  font-size: 14px;
+  color: #333;
+  text-align: center;
+}
+
+.image-container {
+  position: relative;
+  width: 100%;
+  height: 400px; /* Укажите нужную высоту */
+  background-color: #f0f2f5; /* Пример фона, чтобы увидеть его */
+}
+
+.circle-images-container {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px 0;
+  text-align: center;
+  margin-top: 500px; /* Установите отрицательный отступ, чтобы поднять контейнер выше, если это необходимо */
+  background-color: #fff; /* Добавьте фон, если это нужно */
+}
+
+
+
 
 @media (min-width: 769px) {
   .mobile-menu-button {

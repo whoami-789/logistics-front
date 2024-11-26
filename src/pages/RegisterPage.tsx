@@ -4,10 +4,13 @@ import { Link } from 'react-router-dom';
 import { FaTelegramPlane } from 'react-icons/fa';
 import '../App.css';
 import { getData } from 'country-list';
+import { BACKEND_URL } from '../config/config';
+
 
 const RegisterPage: React.FC = () => {
     const [isModalVisible, setIsModalVisible] = React.useState(false);
     const [modalMessage, setModalMessage] = React.useState('');
+    const back = BACKEND_URL;
 
     const onFinish = async (values: { firstName: string; lastName: string; phoneNumber: string; country: string; password: string; role: string }) => {
         const payload = {
@@ -21,7 +24,7 @@ const RegisterPage: React.FC = () => {
         console.log('Отправляемые данные:', payload);
 
         try {
-            const response = await fetch('http://localhost:5050/api/users/register', {
+            const response = await fetch(`${back}/api/users/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -106,19 +109,6 @@ const RegisterPage: React.FC = () => {
                         <Select
                             options={countries}
                             placeholder="Выберите страну"
-                        />
-                    </Form.Item>
-                    <Form.Item
-                        name="role"
-                        label="Ваша роль на сервисе"
-                        rules={[{ required: true, message: 'Пожалуйста, выберите роль!' }]}
-                    >
-                        <Select
-                            options={[
-                                { value: '1', label: 'Заказчик' },
-                                { value: '2', label: 'Водитель' },
-                            ]}
-                            placeholder="Выберите роль"
                         />
                     </Form.Item>
                     <Form.Item

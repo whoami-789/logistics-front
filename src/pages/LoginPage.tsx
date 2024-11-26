@@ -2,13 +2,16 @@ import React from 'react';
 import { Form, Input, Button, message } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { BACKEND_URL } from '../config/config';
+
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+   const back = BACKEND_URL;
 
   const onFinish = async (values: { username: string; password: string }) => {
     try {
-      const response = await axios.post('http://localhost:5050/api/users/login', {
+      const response = await axios.post(`${back}/api/users/login`, {
         phoneNumber: values.username, // Мы отправляем номер телефона как phoneNumber
         password: values.password,
       });
@@ -16,16 +19,12 @@ const LoginPage: React.FC = () => {
       // Сохраняем ID пользователя и роль в localStorage
       localStorage.setItem('token', response.data.token)
       localStorage.setItem('userId', response.data.userId); // Сохраняем ID пользователя
-      localStorage.setItem('role', response.data.role); // Сохраняем роль
 
       message.success('Успешный вход');
 
-      // Переход на страницу в зависимости от роли
-      if (response.data.role === 'Заказчик') {
-        navigate('/customer');
-      } else if (response.data.role === 'Водитель') {
-        navigate('/driver');
-      }
+      navigate('/select-dashboard');
+      window.location.reload(); // Перезагрузка страницы
+
 
     } catch (error) {
       message.error('Ошибка при входе. Проверьте данные.');

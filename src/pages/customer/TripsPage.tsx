@@ -1,166 +1,161 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Input, Select, Button, InputNumber, DatePicker, Checkbox, Row, Col, Divider, Modal } from 'antd';
+import { Form, Input, Select, Button, InputNumber, DatePicker, Checkbox, Row, Col, Divider, Modal, notification } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import axios from 'axios';
 import YandexMap from '../../component/YandexMap';
+import countryData from '../../eurasia_countries_and_cities_ru.json';
+import { BACKEND_URL } from '../../config/config';
+
+
+
 
 const { Option } = Select;
 
 const TripsPage: React.FC = () => {
   const [startDate, setStartDate] = useState<Dayjs | null>(null);
-  const [endDate, setEndDate] = useState<Dayjs | null>(null);
   const [weight, setWeight] = useState<number | null>(null);
   const [price, setPrice] = useState<number | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [cargoType, setCargoType] = useState<string>('');
+  const [tripType, setTripType] = useState<string>('');
+  const [min, setMin] = useState<number | null>(null);
+  const [max, SetMax] = useState<number | null>(null);
+  const [adr, setADR] = useState<string>('');
+  const [telegram, setTelegram] = useState<string>('');
+  const [pnumber, setPnumber] = useState<string>('');
   const [length, setLength] = useState<number | null>(null);
   const [width, setWidth] = useState<number | null>(null);
   const [height, setHeight] = useState<number | null>(null);
+  const [num, setNum] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [advancePaymentPercentage, setAdvancePaymentPercentage] = useState<number | null>(null);
   const [advancePaymentMethod, setAdvancePaymentMethod] = useState<string>('');
   const [currency, setCurrency] = useState<string>('USD');
-  const [roundTrip, setRoundTrip] = useState<boolean>(false);
+  const [nds, setNds] = useState<string>('Нет');
   const [routes, setRoutes] = useState<any[]>([{ countryFrom: '', cityFrom: '', addressFrom: '', countryTo: '', cityTo: '', addressTo: '' }]);
   const [carBody, setCarBody] = useState<string>('');
-  const [countries, setCountries] = useState<any[]>([]);
-  const [cities, setCities] = useState<any[]>([]);
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [selectedRouteIndex, setSelectedRouteIndex] = useState<number | null>(null);
-  const [selectedAddressType, setSelectedAddressType] = useState<'from' | 'to' | null>(null); // Тип адреса: 'from' или 'to'
-  const [selectedAddress, setSelectedAddress] = useState<string>('');
-  const [initialCoords, setInitialCoords] = useState<[number, number] | null>(null);
+  const [countries, setCountries] = useState<{ name: string; code: string }[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
 
-  const handleAddressClick = (index: number, type: 'from' | 'to') => {
-    setSelectedRouteIndex(index);
-    setSelectedAddressType(type);
 
-    // Установите координаты для выбранного города перед открытием модального окна
-    const route = routes[index];
-    if (type === 'from') {
-      getCoordinatesForCity(route.cityFrom).then(coords => {
-        setInitialCoords(coords);
-        setModalVisible(true);
+  const back = BACKEND_URL;
+
+
+  const addRoute = () => {
+    setRoutes([
+      ...routes,
+      {
+        countryFrom: '',
+        cityFrom: '',
+        addressFrom: '',
+        countryTo: '',
+        cityTo: '',
+        addressTo: ''
+      }
+    ]);
+  };
+
+
+  const handleSubmit = async () => {
+    const userId = localStorage.getItem('userId');
+    const numericUserId = userId ? parseInt(userId, 10) : null;
+    const token = localStorage.getItem('token');
+
+    const cargoData = {
+      startDate: startDate?.toISOString(),  // Преобразуем дату в строку ISO
+      weight,
+      price,
+      distance,
+      cargoType,
+      length,
+      width,
+      height,
+      paymentMethod,
+      advancePaymentPercentage,
+      advancePaymentMethod,
+      currency,
+      min,
+      max,
+      adr,
+      nds,
+      telegram,
+      pnumber,
+      routes,  // Маршруты уже в нужном формате
+      carBody,
+      customerNum: numericUserId,  // Убедимся, что userId преобразован в число
+    };
+
+
+    try {
+      const response = await axios.post(`${back}/api/orders`, cargoData, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-    } else {
-      getCoordinatesForCity(route.cityTo).then(coords => {
-        setInitialCoords(coords);
-        setModalVisible(true);
+      notification.success({
+        message: 'Успех',
+        description: 'Заказ успешно создан!',
+      });
+    } catch (error) {
+      console.error('Ошибка при создании заказа:', error);
+      notification.error({
+        message: 'Ошибка',
+        description: 'Не удалось создать заказ. Пожалуйста, попробуйте снова.',
       });
     }
   };
 
-  const addRoute = () => {
-    setRoutes([...routes, { countryTo: '', cityTo: '', addressTo: '' }]);
-  };
 
-
-  const handleSubmit = () => {
-    console.log({
-      startDate, endDate, weight, price, distance, cargoType,
-      length, width, height, paymentMethod, advancePaymentPercentage,
-      advancePaymentMethod, currency, roundTrip, routes, carBody
-    });
-  };
 
   useEffect(() => {
-    // Fetch countries on mount
-    axios.get('https://restcountries.com/v3.1/all')
-      .then((response) => {
-        const countryList = response.data.map((country: any) => ({
-          name: country.name.common,
-          code: country.cca2
-        }));
-        setCountries(countryList);
-      })
-      .catch((error) => {
-        console.error("Error fetching countries: ", error);
-      });
+    // При монтировании компонента установите список стран
+    const countryList = countryData.countries.map((country: any) => ({
+      name: country.name,
+      code: country.countryCode
+    }));
+    setCountries(countryList);
   }, []);
 
   const fetchCities = (countryCode: string) => {
-    axios.get(`http://api.geonames.org/searchJSON?country=${countryCode}&maxRows=10&username=whoami789`)
-      .then((response) => {
-        console.log(response.data); // Выведем данные в консоль
-        const cityList = response.data.geonames.map((city: any) => city.name);
-        setCities(cityList);
-      })
-      .catch((error) => {
-        console.error("Error fetching cities: ", error);
-      });
-  };
+    // Найдите страну по коду
+    const country = countryData.countries.find((c: any) => c.countryCode === countryCode);
 
-  const handleCountryChange = (countryCode: string, index: number, type: string) => {
-    const newRoutes = [...routes];
-    newRoutes[index][type] = countryCode;
-    setRoutes(newRoutes);
-    fetchCities(countryCode);
-  };
-
-  const handleCityChange = async (city: string, index: number, type: string) => {
-    const newRoutes = [...routes];
-    newRoutes[index][type] = city;
-    setRoutes(newRoutes);
-
-    // Получаем координаты выбранного города
-    try {
-      const cityCoordinates = await getCoordinatesForCity(city);
-      setInitialCoords(cityCoordinates); // обновляем координаты для карты
-
-      // Если модалка открыта, обновляем координаты в ней
-      if (modalVisible) {
-        setModalVisible(false); // закрываем карту перед обновлением
-        setTimeout(() => setModalVisible(true), 0); // открываем заново с новыми координатами
-      }
-    } catch (error) {
-      console.error('Ошибка получения координат:', error);
-      setInitialCoords([55.751244, 37.618423]); // дефолтные координаты
+    if (country) {
+      setCities(country.cities);
+    } else {
+      console.error("Country not found");
+      setCities([]); // Очистите список городов, если страна не найдена
     }
   };
 
+  const handleCountryChange = (value: string, index: number, type: 'countryFrom' | 'countryTo') => {
+    const updatedRoutes = [...routes];
+    updatedRoutes[index][type] = value;
+    setRoutes(updatedRoutes);
 
-
-  const getCoordinatesForCity = async (city: string): Promise<[number, number]> => {
-    const apiKey = 'a0182201-d5b3-4c80-8a64-9ac085a73d3d'; // Ваш ключ API
-    const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${apiKey}&geocode=${encodeURIComponent(city)}&format=json`);
-    const data = await response.json();
-
-    if (data && data.response && data.response.GeoObjectCollection && data.response.GeoObjectCollection.featureMember.length > 0) {
-      const coordinates = data.response.GeoObjectCollection.featureMember[0].GeoObject.Point.pos.split(' ');
-      return [parseFloat(coordinates[1]), parseFloat(coordinates[0])]; // Возвращаем [широта, долгота]
+    if (type === 'countryFrom') {
+      // Загружаем города отправления при изменении страны отправления
+      fetchCities(value);
+    } else {
+      // Загружаем города назначения при изменении страны назначения
+      fetchCities(value);
     }
-    return [55.751244, 37.618423]; // Возврат координат по умолчанию, если город не найден
   };
 
-  const getAddressFromCoords = async (coords: [number, number]) => {
-    const apiKey = 'a0182201-d5b3-4c80-8a64-9ac085a73d3d'; // Ваш ключ API
-    const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${apiKey}&geocode=${coords[1]},${coords[0]}&format=json`);
-    const data = await response.json();
-
-    if (data && data.response && data.response.GeoObjectCollection && data.response.GeoObjectCollection.featureMember.length > 0) {
-      return data.response.GeoObjectCollection.featureMember[0].GeoObject.name; // Возвращаем адрес
-    }
-    return 'Адрес не найден'; // Возврат по умолчанию
+  const handleCityChange = (value: string, index: number, type: 'cityFrom' | 'cityTo') => {
+    const updatedRoutes = [...routes];
+    updatedRoutes[index][type] = value;
+    setRoutes(updatedRoutes);
   };
 
-  const handleAddressSelect = (address: string) => {
-    if (selectedRouteIndex !== null) {
-      const newRoutes = [...routes];
-      if (selectedAddressType === 'from') {
-        newRoutes[selectedRouteIndex].addressFrom = address;
-      } else {
-        newRoutes[selectedRouteIndex].addressTo = address;
-      }
-      setRoutes(newRoutes);
+  const handleAddressChange = (address: string, index: number, type: 'from' | 'to') => {
+    const updatedRoutes = [...routes];
+    if (type === 'from') {
+      updatedRoutes[index].addressFrom = address;
+    } else {
+      updatedRoutes[index].addressTo = address;
     }
-
-    // Сбрасываем координаты после выбора адреса
-    setInitialCoords(null);
-    setModalVisible(false); // Закрываем модалку после выбора адреса
+    setRoutes(updatedRoutes);
   };
-
-
 
 
 
@@ -168,148 +163,21 @@ const TripsPage: React.FC = () => {
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '20px' }}>
       <h2>Создать новый груз</h2>
       <Form layout="vertical" onFinish={handleSubmit}>
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item label="Дата начала" required>
-              <DatePicker
-                style={{ width: '100%' }}
-                onChange={(date: Dayjs | null) => setStartDate(date)}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Дата окончания" required>
-              <DatePicker
-                style={{ width: '100%' }}
-                onChange={(date: Dayjs | null) => setEndDate(date)}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Вес (тонн)" required>
-              <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setWeight(value)} />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item label="Стоимость заказа" required>
-              <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setPrice(value)} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Расстояние (км)" required>
-              <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setDistance(value)} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Тип груза" required>
-              <Select value={cargoType} onChange={(value) => setCargoType(value)}>
-                <Option value="габариты">Габариты</Option>
-                <Option value="коробки">Коробки</Option>
-                <Option value="навалом">Навалом</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-
-        {/* Поля для габаритов */}
-        {cargoType === 'габариты' && (
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item label="Длина (м)">
-                <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setLength(value)} />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item label="Ширина (м)">
-                <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setWidth(value)} />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item label="Высота (м)">
-                <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setHeight(value)} />
-              </Form.Item>
-            </Col>
-          </Row>
-        )}
-
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item label="Способ оплаты" required>
-              <Select value={paymentMethod} onChange={(value) => setPaymentMethod(value)}>
-                <Option value="cash">Наличные</Option>
-                <Option value="transfer">Перечисление</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Аванс (%)" required>
-              <InputNumber style={{ width: '100%' }} min={0} max={100} onChange={(value) => setAdvancePaymentPercentage(value)} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Метод аванса" required>
-              <Select value={advancePaymentMethod} onChange={(value) => setAdvancePaymentMethod(value)}>
-                <Option value="cash">Наличные</Option>
-                <Option value="transfer">Перечисление</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item label="Валюта" required>
-              <Select value={currency} onChange={(value) => setCurrency(value)}>
-                <Option value="USD">USD</Option>
-                <Option value="RUB">RUB</Option>
-                <Option value="EUR">EUR</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Тип кузова" required>
-              <Select value={carBody} onChange={(value) => setCarBody(value)}>
-                <Option value="Тентованный">Тентованный</Option>
-                <Option value="Открытый">Открытый</Option>
-                <Option value="Рефрижератор">Рефрижератор</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Туда-обратно">
-              <Checkbox checked={roundTrip} onChange={(e) => setRoundTrip(e.target.checked)}>Туда и обратно</Checkbox>
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Divider />
-
         {/* Многостоповая поездка */}
         <h3>Маршруты</h3>
         {routes.map((route, index) => (
           <Row key={index} gutter={16}>
-            {/* Отображаем только для первого маршрута */}
             {index === 0 && (
               <>
                 <Col span={8}>
-                  <Form.Item label="Страна отправления" required>
+                  <Form.Item label="Страна отправления" name={`fromcountry${index}`}>
                     <Select
                       showSearch
                       placeholder="Выберите страну"
-                      optionFilterProp="children"
-                      onChange={(value) => handleCountryChange(value, index, 'countryFrom')}
-                      filterOption={(input, option) => {
-                        if (option && option.children) {
-                          return option.children.toString().toLowerCase().includes(input.toLowerCase());
-                        }
-                        return false;
-                      }}
+                      onChange={(key) => handleCountryChange(key, index, 'countryFrom')}
                     >
                       {countries.map((country) => (
-                        <Option key={country.code} value={country.code}>
+                        <Option key={country.name} value={country.code}>
                           {country.name}
                         </Option>
                       ))}
@@ -317,18 +185,11 @@ const TripsPage: React.FC = () => {
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item label="Город отправления" required>
+                  <Form.Item label="Город отправления" name={`fromcity${index}`}>
                     <Select
                       showSearch
                       placeholder="Выберите город"
-                      optionFilterProp="children"
                       onChange={(value) => handleCityChange(value, index, 'cityFrom')}
-                      filterOption={(input, option) => {
-                        if (option && option.children) {
-                          return option.children.toString().toLowerCase().includes(input.toLowerCase());
-                        }
-                        return false;
-                      }}
                     >
                       {cities.map((city) => (
                         <Option key={city} value={city}>
@@ -339,34 +200,25 @@ const TripsPage: React.FC = () => {
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item label="Адрес отправления" required>
+                  <Form.Item label="Адрес отправления" name={`fromaddress${index}`}>
                     <Input
                       value={route.addressFrom}
-                      onClick={() => handleAddressClick(index, 'from')} // Открываем карту для адреса отправления
-                      readOnly // Делаем инпут только для чтения
+                      onChange={(e) => handleAddressChange(e.target.value, index, 'from')}
                     />
                   </Form.Item>
                 </Col>
               </>
             )}
 
-            {/* Всегда отображаем поля назначения */}
             <Col span={8}>
-              <Form.Item label="Страна назначения" required>
+              <Form.Item label="Страна назначения" name={`tocountry${index}`}>
                 <Select
                   showSearch
                   placeholder="Выберите страну"
-                  optionFilterProp="children"
-                  onChange={(value) => handleCountryChange(value, index, 'countryTo')}
-                  filterOption={(input, option) => {
-                    if (option && option.children) {
-                      return option.children.toString().toLowerCase().includes(input.toLowerCase());
-                    }
-                    return false;
-                  }}
+                  onChange={(key) => handleCountryChange(key, index, 'countryTo')}
                 >
                   {countries.map((country) => (
-                    <Option key={country.code} value={country.code}>
+                    <Option key={country.name} value={country.code}>
                       {country.name}
                     </Option>
                   ))}
@@ -374,18 +226,11 @@ const TripsPage: React.FC = () => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item label="Город назначения" required>
+              <Form.Item label="Город назначения" name={`tocity${index}`}>
                 <Select
                   showSearch
                   placeholder="Выберите город"
-                  optionFilterProp="children"
                   onChange={(value) => handleCityChange(value, index, 'cityTo')}
-                  filterOption={(input, option) => {
-                    if (option && option.children) {
-                      return option.children.toString().toLowerCase().includes(input.toLowerCase());
-                    }
-                    return false;
-                  }}
                 >
                   {cities.map((city) => (
                     <Option key={city} value={city}>
@@ -396,36 +241,218 @@ const TripsPage: React.FC = () => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item label="Адрес назначения" required>
+              <Form.Item label="Адрес назначения" name={`toaddress${index}`}>
                 <Input
                   value={route.addressTo}
-                  onClick={() => handleAddressClick(index, 'to')} // Открываем карту для адреса назначения
-                  readOnly // Делаем инпут только для чтения
+                  onChange={(e) => handleAddressChange(e.target.value, index, 'to')}
                 />
               </Form.Item>
             </Col>
           </Row>
         ))}
 
-
         <Button type="dashed" onClick={addRoute} style={{ width: '100%', marginBottom: '20px' }}>
           <PlusOutlined /> Добавить пункт назначения
         </Button>
 
-        <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
-          Сохранить заказ
-        </Button>
 
-        {/* Modal for Yandex Map */}
-        <Modal
-          title="Выберите место на карте"
-          visible={modalVisible}
-          onCancel={() => setModalVisible(false)}
-          footer={null}
-          width={800}
-        >
-          <YandexMap initialCoords={initialCoords} onAddressSelect={handleAddressSelect} />
-        </Modal>
+        <Divider />
+
+
+        <Row gutter={16}>
+          <Col span={5}>
+            <Form.Item label="Дата начала"
+              name="startDate"
+              rules={[{ required: true, message: 'Выберите дату начала' }]}
+            >
+              <DatePicker
+                style={{ width: '100%' }}
+                onChange={(date: Dayjs | null) => setStartDate(date)}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={5}>
+            <Form.Item label="Тип кузова"
+              name="ktype"
+              rules={[{ required: true, message: 'Выберите тип кузова' }]}
+            >
+              <Select value={carBody} onChange={(value, option) => setCarBody(value)}>
+                <Option value="Тентованный">Тентованный</Option>
+                <Option value="Открытый">Открытый</Option>
+                <Option value="Рефрижератор">Рефрижератор</Option>
+                <Option value="Бортовый">Бортовый</Option>
+                <Option value="Цельнометаллический">Цельнометаллический </Option>
+                <Option value="Паровоз">Паровоз</Option>
+                <Option value="Фура стандарт 96 кб3">Фура стандарт 96 кб3</Option>
+                <Option value="Мега фура 105 кб3">Мега фура 105 кб3</Option>
+                <Option value="20 контейнер">20 контейнер</Option>
+                <Option value="40 контейнер">40 контейнер</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={5}>
+            <Form.Item label="Телеграм аккаунт"
+              name="telegram"
+              rules={[{ required: true, message: 'Введите телеграм аккаунт' }]}
+            >
+              <Input style={{ width: '100%' }} min={0} onChange={(value) => setTelegram(value.target.value)} />
+            </Form.Item>
+          </Col>
+          <Col span={5}>
+            <Form.Item label="Номер телефона"
+              name="pnumber"
+              rules={[{ required: true, message: 'Введите номер телефона' }]}
+            >
+              <Input style={{ width: '100%' }} min={0} onChange={(value) => setPnumber(value.target.value)} />
+            </Form.Item>
+          </Col>
+          <Col span={4}>
+            <Form.Item label="Вес (тонн)">
+              <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setWeight(value)} />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={16}>
+          <Col span={3}>
+            <Form.Item label="Расстояние">
+              <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setDistance(value)} placeholder='км' />
+            </Form.Item>
+          </Col>
+          <Col span={5}>
+            <Form.Item label="Тип груза">
+              <Select value={cargoType} onChange={(value) => setCargoType(value)}>
+                <Option value="Габариты">Габариты</Option>
+                <Option value="Коробки">Коробки</Option>
+                <Option value="Навалом">Навалом</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={5}>
+            <Form.Item label="Тип перевозки">
+              <Select value={tripType} onChange={(value) => setTripType(value)}>
+                <Option value="FTL ( выделенный транспорт )">FTL ( выделенный транспорт )</Option>
+                <Option value="LTL ( догруз )">LTL ( догруз )</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item label="Температурный режим">
+              <Row gutter={2}>
+                <Col span={12}>
+                <InputNumber style={{ width: '100%' }} placeholder='мин' min={-100} onChange={(value) => setMin(value)} />
+                </Col>
+                <Col span={12}>
+                <InputNumber style={{ width: '100%' }} placeholder='макс' min={-100} onChange={(value) => SetMax(value)} />
+                </Col>
+              </Row>
+            </Form.Item>
+          </Col>
+          <Col span={5}>
+            <Form.Item label="ADR (опасный груз)">
+              <Select value={adr} onChange={(value) => setADR(value)}>
+              <Option value="Да">ДА</Option>
+              <Option value="Нет">Нет</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+
+        {/* Поля для габаритов */}
+        {cargoType === 'габариты' && (
+          <Row gutter={16}>
+            <Col span={3}>
+              <Form.Item label="Длина (м)">
+                <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setLength(value)} />
+              </Form.Item>
+            </Col>
+            <Col span={3}>
+              <Form.Item label="Ширина (м)">
+                <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setWidth(value)} />
+              </Form.Item>
+            </Col>
+            <Col span={3}>
+              <Form.Item label="Высота (м)">
+                <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setHeight(value)} />
+              </Form.Item>
+            </Col>
+          </Row>
+        )}
+        {cargoType === 'коробки' && (
+          <Row gutter={16}>
+            <Col span={3}>
+              <Form.Item label="Колличество">
+                <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setNum(value)} />
+              </Form.Item>
+            </Col>
+          </Row>
+        )}
+
+        <Row gutter={16}>
+          <Col span={5}>
+            <Form.Item label="Способ оплаты">
+              <Select value={paymentMethod} onChange={(value) => setPaymentMethod(value)}>
+                <Option value="Наличные">Наличные</Option>
+                <Option value="Банковский перевод">Банковский перевод</Option>
+                <Option value="На карточку">На карточку</Option>
+                <Option value="Другой способ">Другой способ</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={5}>
+            <Form.Item label="Стоимость заказа">
+              <InputNumber style={{ width: '100%' }} min={0} onChange={(value) => setPrice(value)} />
+            </Form.Item>
+          </Col>
+          <Col span={5}>
+            <Form.Item label="Метод аванса">
+              <Select value={advancePaymentMethod} onChange={(value) => setAdvancePaymentMethod(value)}>
+                <Option value="Наличные">Наличные</Option>
+                <Option value="Банковский перевод">Банковский перевод</Option>
+                <Option value="На карточку">На карточку</Option>
+                <Option value="Другой способ">Другой способ</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={3}>
+            <Form.Item label="Аванс (%)">
+              <InputNumber style={{ width: '100%' }} min={0} max={100} onChange={(value) => setAdvancePaymentPercentage(value)} />
+            </Form.Item>
+          </Col>
+          <Col span={3}>
+            <Form.Item label="Валюта">
+              <Select value={currency} onChange={(value) => setCurrency(value)}>
+                <Option value="USD">USD</Option>
+                <Option value="RUB">RUB</Option>
+                <Option value="EUR">EUR</Option>
+                <Option value="UAH">UAH</Option>
+                <Option value="BYN">BYN</Option>
+                <Option value="KZT">KZT</Option>
+                <Option value="UZS">UZS</Option>
+                <Option value="TMT">TMT</Option>
+                <Option value="KGS">KGS</Option>
+                <Option value="TJS">TJS</Option>
+                <Option value="AMD">AMD</Option>
+                <Option value="AZN">AZN</Option>
+                <Option value="MDL">MDL</Option>
+                <Option value="CNY">CNY</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={3}>
+            <Form.Item label="НДС">
+              <Select value={nds} onChange={(value) => setNds(value)}>
+                <Option value="ДА">ДА</Option>
+                <Option value="Нет">Нет</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+
+
+        <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
+          Создать груз
+        </Button>
       </Form>
     </div>
   );
